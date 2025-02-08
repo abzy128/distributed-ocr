@@ -28,9 +28,9 @@ jobs:
           python-version: 3.13.1
 
       - name: Install Python dependencies
-        run: pip install black
+        run: pip install pylint
 
       - name: Run linters
         uses: wearerequired/lint-action@v2
         with:
-          black: true
+          pylint: true

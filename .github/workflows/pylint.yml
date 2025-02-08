@@ -12,6 +12,9 @@ jobs:
   run-linters:
     name: Run linters
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.13"]
     permissions:
       checks: write
       contents: write

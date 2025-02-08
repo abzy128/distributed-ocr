@@ -12,7 +12,9 @@ jobs:
   run-linters:
     name: Run linters
     runs-on: ubuntu-latest
-
+    permissions:
+      checks: write
+      contents: write
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
@@ -23,10 +25,9 @@ jobs:
           python-version: 3.13.1
 
       - name: Install Python dependencies
-        run: pip install black flake8
+        run: pip install black
 
       - name: Run linters
         uses: wearerequired/lint-action@v2
         with:
           black: true
-          flake8: true

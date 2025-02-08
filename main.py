@@ -2,9 +2,9 @@
 
 import sys
 from io import BytesIO
-import pytesseract
-from pyspark.sql import SparkSession
-from PIL import Image
+import pytesseract # pylint: disable=import-error
+from pyspark.sql import SparkSession # pylint: disable=import-error
+from PIL import Image # pylint: disable=import-error
 
 
 def split_image(image_path, num_splits):

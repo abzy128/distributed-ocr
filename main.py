@@ -103,6 +103,7 @@ if __name__ == "__main__":
         with open(output_path_arg, "w", encoding='utf-8') as f:
             f.write(FULL_TEXT)
 
-    finally:
         input("Press Enter to stop Spark Context")
+    
+    finally:
         spark.stop()

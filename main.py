@@ -104,4 +104,5 @@ if __name__ == "__main__":
             f.write(FULL_TEXT)
 
     finally:
+        input("Press Enter to stop Spark Context")
         spark.stop()

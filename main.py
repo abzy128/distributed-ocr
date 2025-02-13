@@ -44,6 +44,7 @@ if __name__ == "__main__":
         SparkSession.builder.appName("DistributedOCR")
         .config("spark.executor.memory", "500m")
         .config("spark.executor.cores", "1")
+        .config("spark.metrics.conf", "metrics.properties")
         .getOrCreate()
     )
 

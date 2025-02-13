@@ -1,0 +1,62 @@
+ABBYY Mobile OCR Engine 3.0
+
+Compact Code OCR for Mobile Devices
+
+What is the ABBYY Mobile OCR Engine SDK?
+Benefits of the
+
+fhe ABBYY Mobile OCR Engine 3.0 Software Development Kit (SDK) is a specialised toolkit
+for empowering mobile and other "compact” applications with text recognition and
+ABBYY OCR Engine SDK
+
+conversion capabilities. ABBYY's specially developed "compact code OCR" is optimised to
+deliver a highly accurate conversion of image files into text using a small amount of
+memory and system resources. Platform independence ensures support for such operating - Easy integration of high
+performance text recognition il 1
+capabilities.
+
+Systems as Android, Linux, Symbian, Windows and Windows Mobile.
+- Business card recognition
+- Platform independence -
+supporting such systems as
+Windows Mobile, Symbian,
+Android™ and Linux Systems
+
+Your Mobile Application with the Power of OCR
+ABBYY OCR technology transforms images into manageable text which can be saved, stored, edited
+
+or sent via web, web services, email or SMS. Applications based on the Mobile OCR Engine 3.0 will
+transform notes, business cards, newspaper clippings, menus and other texts captured via a mobile
+imaging device into data which can easily be embedded into other applications. Examples of appli-
+
+cations which can be enhanced with ABBYY Mobile OCR Engine include:
+Optimised memory
+
+management and efficient
+
+Camera Smartphone/PDA Applications: Capture Front-ends Linked to Backend
+Take full advantage of cameras on mobile Systems and Web Applications Joading for high performance
+devices. Photo menus, signs and posters, Exisiting applications can be improved or
+business cards, and other documents can be extended using OCR for easy capture of input - Multilingual support
+converted into text for easier input into a of data to a networked backend system or
+Web applicaition. For example: Sample application and
+test shell
+
+Mobile capture for CRM - take a picture of
+
+variety of applications such as:
+a business card for input into a CRM
+
+Phone and address books
+
+- Sophisticated OCR
+
++ Calendars
+. Task lists system or sales lead database i
++ Allin-one personal information - Mobile capture for Workflow - tlake ) :
+managers (PIMs) picture of a document for fast input into a - Extremely accurate text
+workflow application conversion
+- Multi-column document
+
++ Business card readers ’ y
+< 3 Client/server text conversion and

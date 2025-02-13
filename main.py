@@ -1,87 +1,44 @@
 """Module for distributed OCR using PySpark."""
 
 import sys
+import os
 from io import BytesIO
-import pytesseract # pylint: disable=import-error
-from pyspark.sql import SparkSession # pylint: disable=import-error
-from PIL import Image # pylint: disable=import-error
+import pytesseract
+from pyspark.sql import SparkSession
+from PIL import Image, UnidentifiedImageError
 
 
-def split_image(image_path, num_splits):
-    """Splits an image into a specified number of horizontal parts.
+def log(msg, level="info"):
+    """Log a message to the console."""
+    level_color = "\033[0m"
+    if level == "info":
+        level_color = "\033[96m"
+    elif level == "warning":
+        level_color = "\033[93m"
+    elif level == "error":
+        level_color = "\033[91m"
 
-    This function takes an input image and divides it into equal horizontal sections,
-    with the last section potentially being slightly larger to account for any remainder.
-
-    Args:
-        image_path (str): The file path to the input image.
-        num_splits (int): The number of horizontal sections to split the image into.
-
-    Returns:
-        list: A list of PIL.Image objects representing the horizontal splits of the original image.
-              Each split maintains the original width but has a height of approximately
-              (original_height / num_splits).
-    """
-    img = Image.open(image_path)
-    width, height = img.size
-    split_height = height // num_splits
-    splits = []
-    for i in range(num_splits):
-        top = i * split_height
-        bottom = (i + 1) * split_height if i < num_splits - 1 else height
-        region = img.crop((0, top, width, bottom))
-        splits.append(region)
-    return splits
+    print(level_color + msg + "\033[0m")
 
 
-def image_to_byte_array(image):
-    """
-    Convert a PIL Image object to a byte array.
-
-    This function takes a PIL Image instance and converts it to a byte array in PNG format.
-    The image is first saved to a BytesIO buffer and then converted to bytes.
-
-    Args:
-        image (PIL.Image.Image): The PIL Image object to be converted
-
-    Returns:
-        bytes: The image data as a byte array in PNG format
-    """
-    img_byte_arr = BytesIO()
-    image.save(img_byte_arr, format="PNG")
-    return img_byte_arr.getvalue()
-
-
-def ocr_process(byte_data):
-    """
-    Performs Optical Character Recognition (OCR) on image data.
-
-    Args:
-        byte_data (bytes): Raw image data in bytes format.
-
-    Returns:
-        str: Extracted text from the image.
-
-    Raises:
-        PIL.UnidentifiedImageError: If the byte data cannot be opened as an image.
-        
-    Note:
-        This function uses pytesseract for OCR processing and requires the tesseract-ocr
-        engine to be installed on the system.
-    """
-    image = Image.open(BytesIO(byte_data))
-    text = pytesseract.image_to_string(image)
-    return text
+def ocr_process(img_bytes):
+    """Performs OCR on image bytes."""
+    try:
+        image = Image.open(BytesIO(img_bytes))
+        ocr_output = pytesseract.image_to_string(image)
+        return ocr_output
+    except (UnidentifiedImageError, pytesseract.TesseractError) as e:
+        log(f"Error during OCR: {e}", level="error")
+        return ""
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3 and len(sys.argv) != 4:
-        print("Usage: spark_ocr.py <image_path> <output> <num_splits>")
+    if len(sys.argv) != 2:
+        log("Usage: spark_ocr.py <input_directory>", level="error")
         sys.exit(1)
 
-    image_path_arg = sys.argv[1]
-    output_path_arg = sys.argv[2]
-    num_splits_arg = int(sys.argv[3]) if len(sys.argv) == 4 else 4
+    input_dir = sys.argv[1]
+    output_dir = os.path.join(input_dir, "output")
 
     spark = (
         SparkSession.builder.appName("DistributedOCR")
@@ -91,19 +48,62 @@ if __name__ == "__main__":
     )
 
     try:
-        image_splits = split_image(image_path_arg, num_splits_arg)
-        split_bytes = [image_to_byte_array(split) for split in image_splits]
+        image_files = []
+        for f in os.listdir(input_dir):
+            full_path = os.path.join(input_dir, f)
+            if os.path.isfile(full_path) and f.lower().endswith(
+                (".png", ".jpg", ".jpeg", ".tiff", ".tif")
+            ):
+                try:
+                    with open(full_path, "rb") as img_file:
+                        image_bytes = img_file.read()
+                        image_files.append((f, image_bytes))
+                except (IOError, PermissionError) as e:
+                    log(f"Error reading image {f}: {e}", level="error")
 
-        rdd = spark.sparkContext.parallelize(split_bytes, numSlices=num_splits_arg)
-        ocr_results = rdd.map(ocr_process).collect()
+        def process_image(image_data):
+            """Process an image using OCR to extract text.
 
-        FULL_TEXT = "\n".join(ocr_results)
-        print(FULL_TEXT)
+            Args:
+                image_data (tuple): A tuple containing image filename (str) and image data (bytes).
 
-        with open(output_path_arg, "w", encoding='utf-8') as f:
-            f.write(FULL_TEXT)
+            Returns:
+                tuple: A tuple containing:
+                    - str or None: The image filename if successful, None if failed
+                    - str: The extracted text if successful, empty string if failed
 
-        input("Press Enter to stop Spark Context")
-    
+            Raises:
+                pytesseract.TesseractError: If OCR processing fails, error is caught and logged
+            """
+            image_filename, image_data_bytes = image_data
+            try:
+                extracted_text = ocr_process(image_data_bytes)
+                return image_filename, extracted_text
+            except pytesseract.TesseractError as e:
+                log(f"Error processing image {image_filename}: {e}", level="error")
+                return None, ""
+
+        rdd = spark.sparkContext.parallelize(image_files)
+        ocr_results = rdd.map(process_image).collect()
+
+        for filename, text in ocr_results:
+            if filename:  # Check if filename is valid (not None due to error)
+                output_file = os.path.join(
+                    output_dir, f"{os.path.splitext(filename)[0]}.txt"
+                )
+                with open(output_file, "w", encoding="utf-8") as f:
+                    f.write(text)
+                log(f"OCR results for {filename} saved to {output_file}")
+
+    except IOError as e:
+        log(f"File operation error: {e}")
+    except RuntimeError as e:
+        log(f"Spark operation error: {e}")
+
     finally:
+        log("Distirbuted OCR complete.")
+        log(f"You can find the OCR results in: {output_dir}")
+        log("Spark context is stil available at http://localhost:4040")
+        log("Press Ctrl+C to exit.")
+        input()
         spark.stop()
